@@ -1,70 +1,73 @@
-<!D<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETH Whale Tracker</title>
-</head>
-<body>
-    <h2>ETH Whale Transaction Screening</h2>
-    <input id="address" placeholder="Masukkan alamat wallet (contoh: vitalik.eth)" style="width:90%;padding:8px;">
-    <button onclick="checkTx()">Cek Transaksi</button>
+    <title>Penyaringan Transaksi Paus ETH</title>
 
-    <div id="result" style="margin-top:20px;"></div>
-
-    <script>
-        async function checkTx() {
-            const address = document.getElementById("address").value;
-            if (!address) return alert("Isi dulu bro!");
-
-            document.getElementById("result").innerHTML = "Loading...";
-
-            try {
-                const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&sort=desc&apikey=YourApiKeyToken`;
-                const data = await fetch(url).then(r => r.json());
-
-                if (!data.result || data.result.length === 0) {
-                    document.getElementById("result").innerHTML = "Tidak ada transaksi ditemukan.";
-                    return;
-                }
-
-                let output = "<h3>Transaksi Terbaru:</h3>";
-
-                data.result.slice(0, 10).forEach(tx => {
-                    const eth = (tx.value / 1e18).toFixed(2);
-                    if (eth >= 10) { // Screening hanya > 10 ETH
-                        output += `
-                            <p>
-                            🔥 <b>${eth} ETH</b><br>
-                            From: ${tx.from}<br>
-                            To: ${tx.to}<br>
-                            Hash: ${tx.hash}
-                            </p>
-                            <hr>
-                        `;
-                    }
-                });
-
-                document.getElementById("result").innerHTML = output || "Tidak ada transaksi > 10 ETH.";
-            } catch (err) {
-                document.getElementById("result").innerHTML = "Error bro: " + err.toString();
-            }
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
         }
-    </script>
-</body>
-</html>OCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>ES8 Project</title>
-
-  <script src="//unpkg.com/systemjs@0.19.47/dist/system.js"></script>
+        input, button {
+            padding: 10px;
+            width: 80%;
+            margin-top: 10px;
+        }
+        #result {
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
-
 <body>
-  <script src="config.js"></script>
+
+<h1>Penyaringan Transaksi Paus ETH</h1>
+
+<input id="walletInput" type="text" placeholder="Masukkan alamat wallet (contoh: vitalik.eth)">
+<button onclick="cekTransaksi()">Cek Transaksi</button>
+
+<div id="result"></div>
+
+<script>
+async function cekTransaksi() {
+    const apiKey = "MASUKKAN_API_KEY_ETHERSCAN_KAMU";
+    const address = document.getElementById("walletInput").value.trim();
+    const resultBox = document.getElementById("result");
+
+    if (!address) {
+        resultBox.textContent = "Masukkan alamat wallet dulu bro.";
+        return;
+    }
+
+    resultBox.textContent = "Mengambil data...";
+
+    const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.result.length === 0) {
+            resultBox.textContent = "Tidak ada transaksi ditemukan.";
+            return;
+        }
+
+        const transaksiBesar = data.result.filter(tx => Number(tx.value) / 1e18 >= 10);
+
+        if (transaksiBesar.length === 0) {
+            resultBox.textContent = "Tidak ada transaksi di atas 10 ETH.";
+            return;
+        }
+
+        resultBox.textContent = JSON.stringify(transaksiBesar, null, 2);
+
+    } catch (err) {
+        resultBox.textContent = "Error mengambil data.";
+    }
+}
+</script>
+
 </body>
 </html>
