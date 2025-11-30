@@ -1,73 +1,118 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Penyaringan Transaksi Paus ETH</title>
+    <title>Cek Transaksi Wallet</title>
 
     <style>
         body {
+            background: #111;
+            color: #fff;
             font-family: Arial, sans-serif;
-            margin: 40px;
+            padding: 20px;
         }
-        input, button {
-            padding: 10px;
-            width: 80%;
-            margin-top: 10px;
+
+        .container {
+            max-width: 450px;
+            margin: auto;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
         }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: none;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: #00c853;
+            color: white;
+            font-size: 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
         #result {
-            margin-top: 20px;
-            white-space: pre-wrap;
+            margin-top: 15px;
+            padding: 10px;
+            background: #222;
+            border-radius: 6px;
+            min-height: 50px;
         }
     </style>
 </head>
 <body>
 
-<h1>Penyaringan Transaksi Paus ETH</h1>
+    <div class="container">
+        <h2>Cek Transaksi Wallet ETH</h2>
 
-<input id="walletInput" type="text" placeholder="Masukkan alamat wallet (contoh: vitalik.eth)">
-<button onclick="cekTransaksi()">Cek Transaksi</button>
+        <input type="text" id="walletInput" placeholder="Masukkan wallet address (0x...)">
 
-<div id="result"></div>
+        <button onclick="cekTransaksi()">Cek Transaksi</button>
 
-<script>
-async function cekTransaksi() {
-    const apiKey = "F7Q8P8187TNAD1Z5BDP6UZ6DKEN2ZX338M";
-    const address = document.getElementById("walletInput").value.trim();
-    const resultBox = document.getElementById("result");
+        <div id="result">Menunggu input wallet...</div>
+    </div>
 
-    if (!address) {
-        resultBox.textContent = "Masukkan alamat wallet dulu bro.";
-        return;
-    }
 
-    resultBox.textContent = "Mengambil data...";
+    <script>
+        async function cekTransaksi() {
+            const apiKey = "F7Q8P8187TNAD1Z5BDP6UZ6DKEN2ZX338M"; // API KEY
+            const address = document.getElementById("walletInput").value.trim();
+            const resultBox = document.getElementById("result");
 
-    const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+            // Validasi alamat
+            if (!address) {
+                resultBox.textContent = "Masukkan alamat wallet dulu bro.";
+                return;
+            }
 
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
+            if (!address.startsWith("0x")) {
+                resultBox.textContent = "Alamat wallet harus dimulai dengan 0x bro.";
+                return;
+            }
 
-        if (data.result.length === 0) {
-            resultBox.textContent = "Tidak ada transaksi ditemukan.";
-            return;
+            const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+
+            resultBox.textContent = "Mengambil data transaksi...";
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                console.log(data); // Debug jika error
+
+                if (data.status === "1" && data.result.length > 0) {
+                    const tx = data.result[0];
+
+                    resultBox.innerHTML = `
+                        <b>Transaksi Terbaru:</b><br>
+                        Hash: ${tx.hash}<br>
+                        Dari: ${tx.from}<br>
+                        Ke: ${tx.to}<br>
+                        Nilai: ${tx.value} Wei<br>
+                        Block: ${tx.blockNumber}<br>
+                        Status: ${tx.isError === "0" ? "Berhasil" : "Gagal"}
+                    `;
+                } else {
+                    resultBox.textContent = "Tidak ada transaksi ditemukan bro.";
+                }
+
+            } catch (error) {
+                console.error(error);
+                resultBox.textContent = "Error mengambil data dari API.";
+            }
         }
-
-        const transaksiBesar = data.result.filter(tx => Number(tx.value) / 1e18 >= 10);
-
-        if (transaksiBesar.length === 0) {
-            resultBox.textContent = "Tidak ada transaksi di atas 10 ETH.";
-            return;
-        }
-
-        resultBox.textContent = JSON.stringify(transaksiBesar, null, 2);
-
-    } catch (err) {
-        resultBox.textContent = "Error mengambil data.";
-    }
-}
-</script>
+    </script>
 
 </body>
 </html>
